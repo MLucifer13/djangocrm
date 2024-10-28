@@ -1,8 +1,11 @@
+from typing import Any
 from django.core.mail import send_mail
+from django.db.models.query import QuerySet
 from django.shortcuts import render, redirect,reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.views import generic
+from agents.mixins import OrganisorAndLoginRequiredMixin
 from .models import Lead, Agent
 from .forms import LeadForm, LeadModelForm, CustomUserCreationForm
 
@@ -24,8 +27,17 @@ def landing_page(request):
 
 class LeadListView(LoginRequiredMixin, generic.ListView):
     template_name = "leads/lead_list.html"
-    queryset = Lead.objects.all()
     context_object_name = "leads"
+
+    def get_queryset(self):
+        user = self.request.user
+        
+        if user.is_organisor:
+            queryset = Lead.objects.filter(organisation=user.userprofile)
+        else:
+            queryset = Lead.objects.filter(organisation=user.agent.organisation)    
+            queryset = queryset.filter(agent__user=user)
+        return queryset
 
 def lead_list(request):
     leads = Lead.objects.all()
@@ -48,7 +60,7 @@ def lead_detail(request, pk):
     }
     return render(request, "leads/lead_detail.html",context)
 
-class LeadCreateView(LoginRequiredMixin, generic.CreateView):
+class LeadCreateView(OrganisorAndLoginRequiredMixin, generic.CreateView):
     template_name = "leads/lead_create.html"
     form_class = LeadModelForm
 
@@ -108,7 +120,7 @@ def lead_update(request,pk):
 
 
 
-class LeadDeleteView(LoginRequiredMixin, generic.DeleteView):
+class LeadDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
     template_name = "leads/lead_delete.html"
     queryset = Lead.objects.all()
 
