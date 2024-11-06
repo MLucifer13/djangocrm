@@ -27,17 +27,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # Third party apps
-    'crispy_forms',
-    "crispy_tailwind",
-    'tailwind',
-    'theme',
-
-    # Local apps
     'leads',
     'agents',
+
+    #Third Party
+    "crispy_forms",
+    "crispy_tailwind",
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+
+CRISPY_TEMPLATE_PACK = "tailwind"
 
 MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
