@@ -1,4 +1,5 @@
-from typing import Any
+import datetime
+import logging
 from django.core.mail import send_mail
 from django.db.models.query import QuerySet
 from django.shortcuts import render, redirect,reverse
@@ -10,8 +11,9 @@ from .models import Lead, Agent, Category
 from .forms import (LeadForm,
                     LeadModelForm,
                     CustomUserCreationForm,
-                     AssignAgentForm,
-                     CategoryModelForm)
+                    AssignAgentForm,
+                    LeadCategoryUpdateForm,
+                    CategoryModelForm)
 
 class SignupView(generic.CreateView):
     template_name = "registration/signup.html"
@@ -247,4 +249,33 @@ class CategoryDeleteView(OrganisorAndLoginRequiredMixin, generic.DeleteView):
             )
         return queryset
 
+class LeadCategoryUpdateView(LoginRequiredMixin, generic.UpdateView):
+    template_name = "leads/lead_category_update.html"
+    form_class = LeadCategoryUpdateForm
+
+    def get_queryset(self):
+        user = self.request.user
+        # initial queryset of leads for the entire organisation
+        if user.is_organisor:
+            queryset = Lead.objects.filter(organisation=user.userprofile)
+        else:
+            queryset = Lead.objects.filter(organisation=user.agent.organisation)
+            # filter for the agent that is logged in
+            queryset = queryset.filter(agent__user=user)
+        return queryset
+
+    def get_success_url(self):
+        return reverse("leads:lead-detail", kwargs={"pk": self.get_object().id})
+
+    def form_valid(self, form):
+        lead_before_update = self.get_object()
+        instance = form.save(commit=False)
+        converted_category = Category.objects.get(name="Converted")
+        if form.cleaned_data["category"] == converted_category:
+            # update the date at which this lead was converted
+            if lead_before_update.category != converted_category:
+                # this lead has now been converted
+                instance.converted_date = datetime.datetime.now()
+        instance.save()
+        return super(LeadCategoryUpdateView, self).form_valid(form)
 
