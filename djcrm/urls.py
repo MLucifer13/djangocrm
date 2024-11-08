@@ -9,7 +9,7 @@ from django.contrib.auth.views import (
     PasswordResetConfirmView,
     PasswordResetCompleteView)
 from django.urls import path,include
-from leads.views import LandingPageView,SignupView
+from leads.views import LandingPageView,SignupView, DashboardView
 
 
 urlpatterns = [
@@ -17,6 +17,7 @@ urlpatterns = [
     path('leads/', include('leads.urls', namespace="leads")),
     path('agents/', include('agents.urls', namespace="agents")),
     path('', LandingPageView.as_view(), name='landing-page'),
+    path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('signup/', SignupView.as_view(), name="signup"),
